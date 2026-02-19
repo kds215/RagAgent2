@@ -11,8 +11,12 @@ class GradeAnswer(BaseModel):
     )
 
 
-llm = ChatOpenAI(temperature=0)
-structured_llm_grader = llm.with_structured_output(GradeAnswer)
+llm = ChatOpenAI(model="gpt-5.2",temperature=0)
+structured_llm_grader = llm.with_structured_output(
+    GradeAnswer, 
+    method="function_calling",
+    include_raw=False  # Adding to bypass internal compatibility checks
+    )
 
 system = """You are a grader assessing whether an answer addresses / resolves a question \n 
      Give a binary score 'yes' or 'no'. Yes' means that the answer resolves the question."""

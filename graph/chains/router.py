@@ -18,8 +18,8 @@ llm = ChatOpenAI(temperature=0)
 structured_llm_router = llm.with_structured_output(RouteQuery)
 
 system = """You are an expert at routing a user question to a vectorstore or web search.
-The vectorstore contains documents related to agents, prompt engineering, and adversarial attacks.
-Use the vectorstore for questions on these topics. For all else, use web-search."""
+The vectorstore contains documents loaded by the user.
+Always try to use the vectorstore first for any user questions."""
 route_prompt = ChatPromptTemplate.from_messages(
     [
         ("system", system),

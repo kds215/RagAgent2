@@ -1,0 +1,85 @@
+RAG Agent Project - Code Flow & Architecture Summary
+======================================================
+
+1. Project Overview
+-------------------
+This project implements an accessible, CLI-based Retrieval-Augmented Generation (RAG) agent. It is designed to ingest local documents, maintain a vector database, and answer user queries using a sophisticated LangGraph-based workflow. The agent prioritizes high-signal, low-noise output suitable for screen readers.
+
+2. Key Entry Points
+-------------------
+- `ragagent2.py`: The main CLI entry point.
+  - Handles command-line arguments: `--query`, `--summarize`, `--input`, `--output`, `--rich`.
+  - Manages the top-level application flow: ingestion -> processing -> output -> archiving.
+  - Implements the "Summarize All" feature directly.
+  - Invokes the LangGraph application for complex queries.
+
+- `ingestion.py`: Handles document processing and vector store management.
+  - Scans the input directory for supported file types.
+  - Uses specific loaders for `.txt`, `.pdf`, `.docx`, `.rtf`, `.pptx`, `.html`, `.md`, `.log`, `.csv`, `.json`.
+  - Gracefully handles `.mhtml` and other complex types via `UnstructuredLoader`, skipping if dependencies (libmagic) are missing.
+  - Implements `get_display_name` to correctly label files inside macOS `.rtfd` bundles.
+  - Splits text into chunks and persists them into a Chroma vector database using OpenAI embeddings.
+
+3. Architecture & Data Flow
+---------------------------
+
+A. Ingestion Phase (`ingestion.py`)
+   1. User specifies an input directory (default: `./input`).
+   2. Script walks the directory, sorting files alphabetically.
+   3. Files are loaded using a mapped loader (e.g., `PyPDFLoader` for PDFs).
+   4. Documents are split into chunks (size: 500, overlap: 100).
+   5. Chunks are embedded and stored in a local Chroma database (`./vector_db`).
+
+B. Query Phase - LangGraph Workflow (`graph/`)
+   The agent uses a state machine defined in `graph/graph.py` to answer questions.
+
+   State (`graph/state.py`):
+   - `question`: The user's input query.
+   - `generation`: The generated answer.
+   - `web_search`: Boolean flag to trigger web search.
+   - `documents`: List of retrieved `Document` objects.
+   - `retry_count`: Counter to prevent infinite loops (max 3 retries).
+
+   Nodes (`graph/nodes/`):
+   1. `retrieve`: Fetches relevant documents from the Chroma vector store.
+   2. `grade_documents`: specific LLM call to grade relevance of retrieved docs to the query. Filters out irrelevant docs.
+   3. `web_search`: Uses Tavily API to supplement information if retrieved docs are insufficient. Deduplicates results to avoid repetition.
+   4. `generate`: Calls the LLM (GPT-5-mini/GPT-4o) to synthesize an answer from the current context (docs + web results). Increments `retry_count`.
+
+   Edges & Conditional Logic (`graph/graph.py`):
+   - Entry -> `route_question`: Decides whether to use RAG (vectorstore) or Web Search based on the query topic.
+   - `retrieve` -> `grade_documents`:
+     - If docs are relevant -> `decide_to_generate` -> `GENERATE`.
+     - If docs are irrelevant -> `decide_to_generate` -> `WEBSEARCH`.
+   - `GENERATE` -> `grade_generation_grounded_in_documents_and_question`:
+     - Checks for hallucinations (groundedness).
+     - Checks if the question is actually answered.
+     - If "useful" -> END.
+     - If "not useful" or "hallucination" -> retry (loop back to `WEBSEARCH` or `GENERATE`).
+     - **Safety**: If `retry_count > 3`, force exit to prevent infinite loops.
+
+C. Output & Archiving (`ragagent2.py`)
+   - **Console Output**:
+     - "Rich" mode: Uses panels and tables for sighted users.
+     - Default/Accessible mode: Uses clean, linear text with numbered lists (e.g., `#1. Summarizing: "file.txt":`).
+     - Strips decorative boxes/ASCII art for screen reader compatibility.
+   - **Archiving**:
+     - Automatically saves the full response to `./output/YYYY/mmdd.hhmm-QueryName.txt`.
+     - Filenames are timestamped and camel-cased for easy sorting.
+
+4. Directory Structure
+----------------------
+- `graph/`: Contains the LangGraph application logic.
+  - `chains/`: LLM chains for specific tasks (grading, routing, generation).
+  - `nodes/`: Functions representing graph nodes.
+- `input/`: Default source folder for documents.
+- `output/`: Archives of generated answers and summaries.
+- `vector_db/`: Persisted Chroma database files.
+- `.venv/`: Python virtual environment (managed by Poetry).
+
+5. Dependencies
+---------------
+- Core: `langgraph`, `langchain`, `langchain-openai`, `langchain-chroma`.
+- Data: `chromadb`, `tiktoken`.
+- External APIs: `tavily-python` (for web search).
+- Utilities: `rich` (for formatting), `python-dotenv` (config), `poetry` (package management).

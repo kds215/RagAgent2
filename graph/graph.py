@@ -29,6 +29,11 @@ def grade_generation_grounded_in_documents_and_question(state: GraphState) -> st
     question = state["question"]
     documents = state["documents"]
     generation = state["generation"]
+    retry_count = state.get("retry_count", 0)
+
+    if retry_count > 3:
+        print("---DECISION: MAX RETRIES REACHED---")
+        return "useful"
 
     score = hallucination_grader.invoke(
         {"documents": documents, "generation": generation}

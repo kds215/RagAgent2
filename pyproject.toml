@@ -1,26 +1,52 @@
 [tool.poetry]
-name = "langgaph-course"
+name = "accessible-rag-agent"
 version = "0.1.0"
-description = ""
-authors = ["Eden Marco <emarco177@gmail.com>"]
+description = "A RAG agent with a focus on screen-reader accessibility"
+authors = ["Klaus-Szyska@comcast.net"]
 readme = "README.md"
+package-mode = false
 
 [tool.poetry.dependencies]
-python = ">=3.10,<3.13"
+python = "^3.12.11"
 beautifulsoup4 = "*"
-langchain-community = "*"
 tiktoken = "*"
-langchainhub = "*"
-langchain = "*"
+langchainhub = "^0.1.21"
 langgraph = "*"
+langchain-google-genai = "^4.2.0"
+chromadb = "^0.5.0"
+langchain-chroma = "*"
+
 tavily-python = "*"
-langchain-openai = "*"
+langchain-openai = "^1.1.7"
 python-dotenv = "*"
 black = "*"
 isort = "*"
 pytest = "*"
-langchain-chroma = "*"
-langchain-tavily = "^0.1.5"
+langchain-tavily = "^0.2.17"
+langchain-core = "^1.2.7"
+langchain-classic = "^1.0.1"
+langchain-text-splitters = "^1.1.0"
+rich = "^14.3.1"
+tokenizers = "=0.20.3"
+
+# Modern versions to fix the 'spawn' error and support M4/arm64
+llvmlite = "^0.46.0"
+numba = "^0.63.0"
+
+# Document Loaders
+pypdf = "^6.7.0"
+python-docx = "^1.1.0"
+# Utilities
+argparse = "^1.4.0"
+unstructured = {extras = ["all-docs"], version = "^0.18.31"}
+langchain-community = "^0.4.1"
+docx2txt = "^0.9"
+posthog = "3.5.0"
+langchain-unstructured = "^1.0.1"
+
+[tool.poetry.scripts]
+# This allows your friend to just type 'poetry run ask'
+ask = "ragagent2:main"
 
 [build-system]
 requires = ["poetry-core"]
