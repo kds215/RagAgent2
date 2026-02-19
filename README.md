@@ -16,6 +16,7 @@ of [Sophia Young](https://x.com/sophiamyang) from Mistral & [Lance Martin](https
 An accessible RAG CLI tool to summarize or query files from (default) input directory
 and store results in (default) output directory.
 
+```bash
 % poetry run python ragagent2.py --help     
 usage: ragagent2.py [-h] [--query [QUERY]] [--summarize] [--input INPUT] [--output OUTPUT] [--rich]
 
@@ -32,7 +33,7 @@ options:
 % poetry run python ragagent2.py --query 'Was is a multi-agent environment?' 
 
 Both cases are using default 'input' and 'output' directory
-
+```
 
 ## Environment Variables
 
